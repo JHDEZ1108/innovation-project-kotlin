@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -47,6 +48,11 @@ dependencies {
     // Firebase (usando BOM)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     // Jetpack Compose
     implementation(libs.androidx.core.ktx)
