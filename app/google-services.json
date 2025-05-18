@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "135128106360",
+    "project_id": "innovation-project-gt01-05",
+    "storage_bucket": "innovation-project-gt01-05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:135128106360:android:a6c5c4bf5b1e0e4f2cf48d",
+        "android_client_info": {
+          "package_name": "com.g05.innovationprojectgt01_05"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5AGIdRAhUILHDud5oxudVBy0KzYbSjnM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
