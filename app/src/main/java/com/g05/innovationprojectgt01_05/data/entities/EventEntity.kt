@@ -1,11 +1,14 @@
 package com.g05.innovationprojectgt01_05.data.entities
 
+import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.parcelize.Parcelize
 
 /**
  * Represents an event stored in the local SQLite database.
  */
+@Parcelize
 @Entity(tableName = "events")
 data class EventEntity(
     @PrimaryKey(autoGenerate = true)
@@ -18,4 +21,4 @@ data class EventEntity(
     val imageUri: String?, // Path or URL to image (optional)
     val isFavorite: Boolean = false, // Whether the user marked this as favorite
     val location: String? = null // Optional address or place name
-)
+) : Parcelable

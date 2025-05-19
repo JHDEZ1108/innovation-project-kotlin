@@ -52,5 +52,12 @@
             android:name=".ui.screens.HomeActivity"
             android:exported="true"
             android:theme="@style/Theme.InnovationProjectGT0105" />
+
+        <!-- Edición de eventos -->
+        <activity
+            android:name=".ui.screens.EditEventActivity"
+            android:exported="false"
+            android:theme="@style/Theme.InnovationProjectGT0105" />
+
     </application>
 </manifest>
