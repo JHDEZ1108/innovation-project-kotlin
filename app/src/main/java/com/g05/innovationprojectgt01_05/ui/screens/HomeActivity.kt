@@ -8,10 +8,10 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,19 +31,33 @@ class HomeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             InnovationProjectGT0105Theme {
-                val events by viewModel.events.collectAsState()
+                var showAddScreen by remember { mutableStateOf(false) }
 
-                HomeScreen(
-                    events = events,
-                    onLogout = {
-                        viewModel.logout()
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        finish()
-                    },
-                    onAddEvent = {
-                        // TODO: Navegar a AddEventActivity o Composable
-                    }
-                )
+                if (showAddScreen) {
+                    AddEventScreen(
+                        onSave = { event ->
+                            viewModel.insertEvent(event)
+                            showAddScreen = false
+                        },
+                        onCancel = {
+                            showAddScreen = false
+                        }
+                    )
+                } else {
+                    val events by viewModel.events.collectAsState()
+
+                    HomeScreen(
+                        events = events,
+                        onLogout = {
+                            viewModel.logout()
+                            startActivity(Intent(this, LoginActivity::class.java))
+                            finish()
+                        },
+                        onAddEvent = {
+                            showAddScreen = true
+                        }
+                    )
+                }
             }
         }
     }
@@ -127,4 +141,3 @@ fun EventList(events: List<EventEntity>) {
         }
     }
 }
-
