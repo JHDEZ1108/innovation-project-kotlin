@@ -59,5 +59,11 @@
             android:exported="false"
             android:theme="@style/Theme.InnovationProjectGT0105" />
 
+        <!-- Detalle de eventos -->
+        <activity
+            android:name=".ui.screens.EventDetailsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.InnovationProjectGT0105" />
+
     </application>
 </manifest>

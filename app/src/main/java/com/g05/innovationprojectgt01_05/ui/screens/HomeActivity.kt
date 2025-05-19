@@ -87,8 +87,10 @@ class HomeActivity : ComponentActivity() {
                         onDeleteEvent = { event ->
                             viewModel.deleteEvent(event)
                         },
-                        onViewEvent = {
-                            // TODO: abrir pantalla de detalles
+                        onViewEvent = { event ->
+                            val intent = Intent(this, EventDetailsActivity::class.java)
+                            intent.putExtra("event", event)
+                            startActivity(intent)
                         }
                     )
                 }
