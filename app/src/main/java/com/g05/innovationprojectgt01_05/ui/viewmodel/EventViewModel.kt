@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.g05.innovationprojectgt01_05.data.entities.EventEntity
 import com.g05.innovationprojectgt01_05.data.repository.EventRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
@@ -14,9 +14,11 @@ import kotlinx.coroutines.launch
  */
 class EventViewModel(private val repository: EventRepository) : ViewModel() {
 
-    val allEvents: StateFlow<List<EventEntity>> = repository.getAllEvents()
+    // All events
+    val events: StateFlow<List<EventEntity>> = repository.getAllEvents()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Favorite events (if still used in other UI parts)
     val favoriteEvents: StateFlow<List<EventEntity>> = repository.getFavoriteEvents()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -36,5 +38,9 @@ class EventViewModel(private val repository: EventRepository) : ViewModel() {
         viewModelScope.launch {
             repository.deleteEvent(event)
         }
+    }
+
+    fun logout() {
+        Firebase.auth.signOut()
     }
 }

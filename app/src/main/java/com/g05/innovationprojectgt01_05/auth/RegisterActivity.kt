@@ -20,13 +20,13 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.g05.innovationprojectgt01_05.ui.screens.HomeActivity
-import com.g05.innovationprojectgt01_05.ui.theme.MedicalAppointmentsAppTheme
+import com.g05.innovationprojectgt01_05.ui.theme.InnovationProjectGT0105Theme
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MedicalAppointmentsAppTheme {
+            InnovationProjectGT0105Theme {
                 RegisterScreen(
                     onRegisterSuccess = {
                         startActivity(Intent(this, HomeActivity::class.java))
