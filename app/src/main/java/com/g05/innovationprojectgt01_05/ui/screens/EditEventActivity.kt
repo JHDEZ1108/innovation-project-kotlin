@@ -1,17 +1,24 @@
 package com.g05.innovationprojectgt01_05.ui.screens
 
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import com.g05.innovationprojectgt01_05.data.entities.EventEntity
 import com.g05.innovationprojectgt01_05.ui.theme.InnovationProjectGT0105Theme
 
@@ -65,12 +72,23 @@ fun EditEventScreen(
     var date by remember { mutableStateOf(originalEvent.date) }
     var time by remember { mutableStateOf(originalEvent.time) }
     var isFavorite by remember { mutableStateOf(originalEvent.isFavorite) }
+    var imageUri by remember { mutableStateOf(originalEvent.imageUri?.let { Uri.parse(it) }) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            imageUri = uri
+        }
+    }
+
+    val topPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val colorScheme = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .statusBarsPadding()
+            .padding(top = topPadding + 16.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
     ) {
         Text("Editar Evento", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
@@ -103,9 +121,32 @@ fun EditEventScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Imagen representativa (opcional)", style = MaterialTheme.typography.labelMedium)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clickable { imagePickerLauncher.launch("image/*") },
+            contentAlignment = Alignment.Center
+        ) {
+            if (imageUri != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(model = imageUri),
+                    contentDescription = "Imagen seleccionada",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text("Toca para seleccionar una imagen", color = colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 8.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(checked = isFavorite, onCheckedChange = { isFavorite = it })
             Text(text = "Marcar como favorito")
@@ -129,7 +170,8 @@ fun EditEventScreen(
                             description = description,
                             date = date,
                             time = time,
-                            isFavorite = isFavorite
+                            isFavorite = isFavorite,
+                            imageUri = imageUri?.toString()
                         )
                         onSave(updated)
                     } else {
@@ -142,4 +184,3 @@ fun EditEventScreen(
         }
     }
 }
-
