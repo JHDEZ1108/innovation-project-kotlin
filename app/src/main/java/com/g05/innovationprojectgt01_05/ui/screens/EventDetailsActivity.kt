@@ -1,5 +1,6 @@
 package com.g05.innovationprojectgt01_05.ui.screens
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -118,5 +119,30 @@ fun EventDetailsScreen(
 
         Text("¿Favorito?", style = MaterialTheme.typography.labelMedium)
         Text(if (event.isFavorite) "Sí" else "No", style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Mostrar ubicación si existe
+        if (!event.location.isNullOrBlank()) {
+            Text("Ubicación:", style = MaterialTheme.typography.labelMedium)
+            Text(event.location ?: "", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    val mapIntent = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("geo:0,0?q=${Uri.encode(event.location)}")
+                    )
+                    mapIntent.setPackage("com.google.android.apps.maps")
+                    if (mapIntent.resolveActivity(context.packageManager) != null) {
+                        context.startActivity(mapIntent)
+                    } else {
+                        Toast.makeText(context, "No se encontró Google Maps", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            ) {
+                Text("Ver en Google Maps")
+            }
+        }
     }
 }

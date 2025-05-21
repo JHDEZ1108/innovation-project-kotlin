@@ -1,13 +1,15 @@
 package com.g05.innovationprojectgt01_05.ui.screens
 
+import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +23,12 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.g05.innovationprojectgt01_05.data.entities.EventEntity
 import com.g05.innovationprojectgt01_05.ui.theme.InnovationProjectGT0105Theme
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.AutocompleteActivity
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
+import java.io.File
+import java.io.FileOutputStream
 
 class EditEventActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,12 +81,49 @@ fun EditEventScreen(
     var time by remember { mutableStateOf(originalEvent.time) }
     var isFavorite by remember { mutableStateOf(originalEvent.isFavorite) }
     var imageUri by remember { mutableStateOf(originalEvent.imageUri?.let { Uri.parse(it) }) }
+    var location by remember { mutableStateOf(originalEvent.location) }
+
+    // Función para copiar imagen a almacenamiento interno
+    fun copyImageToInternalStorage(context: Context, uri: Uri): Uri? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val fileName = "event_${System.currentTimeMillis()}.jpg"
+            val file = File(context.filesDir, fileName)
+            val outputStream = FileOutputStream(file)
+            inputStream.copyTo(outputStream)
+            inputStream.close()
+            outputStream.close()
+            Uri.fromFile(file)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        if (uri != null) {
-            imageUri = uri
+        uri?.let {
+            val copiedUri = copyImageToInternalStorage(context, it)
+            if (copiedUri != null) {
+                imageUri = copiedUri
+            } else {
+                Toast.makeText(context, "Error al guardar imagen", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    val locationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val place = Autocomplete.getPlaceFromIntent(data!!)
+            val addressComponents = place.addressComponents
+            val address = addressComponents?.asList()?.joinToString(" ") { it.name }
+            location = address
+        } else if (result.resultCode == AutocompleteActivity.RESULT_ERROR) {
+            Toast.makeText(context, "Error al seleccionar ubicación", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -145,9 +190,27 @@ fun EditEventScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Text("Ubicación del evento (opcional)", style = MaterialTheme.typography.labelMedium)
+        OutlinedTextField(
+            value = location ?: "",
+            onValueChange = {},
+            label = { Text("Seleccionar ubicación") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    val fields = listOf(Place.Field.ID, Place.Field.ADDRESS_COMPONENTS)
+                    val intent = Autocomplete.IntentBuilder(
+                        AutocompleteActivityMode.OVERLAY, fields
+                    ).build(context)
+                    locationLauncher.launch(intent)
+                },
+            readOnly = true,
+            enabled = false
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = isFavorite, onCheckedChange = { isFavorite = it })
             Text(text = "Marcar como favorito")
         }
@@ -171,7 +234,8 @@ fun EditEventScreen(
                             date = date,
                             time = time,
                             isFavorite = isFavorite,
-                            imageUri = imageUri?.toString()
+                            imageUri = imageUri?.toString(),
+                            location = location
                         )
                         onSave(updated)
                     } else {
