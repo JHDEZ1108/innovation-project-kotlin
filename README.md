@@ -36,6 +36,7 @@
 
 This project follows a clean and modular **MVVM architecture**:
 
+```
 com.g05.innovationprojectgt01\_05/
 ├── auth/                  → Login & Register screens
 ├── data/
@@ -46,7 +47,7 @@ com.g05.innovationprojectgt01\_05/
 │   ├── screens/           → Add, Edit, View, and Home screen UIs
 │   └── viewmodel/         → ViewModels for UI logic and state management
 └── MainActivity.kt        → App launcher entry point
-
+```
 ---
 
 ## 🔧 Requirements
