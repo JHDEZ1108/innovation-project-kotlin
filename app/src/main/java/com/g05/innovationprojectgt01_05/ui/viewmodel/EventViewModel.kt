@@ -12,15 +12,29 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel for managing events data and UI interaction logic.
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class EventViewModel(private val repository: EventRepository) : ViewModel() {
 
-    // All events
-    val events: StateFlow<List<EventEntity>> = repository.getAllEvents()
+    private val _userId = MutableStateFlow<Int?>(null)
+
+    // All events for the current user
+    val events: StateFlow<List<EventEntity>> = _userId
+        .filterNotNull()
+        .flatMapLatest { repository.getEventsByUserId(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Favorite events (if still used in other UI parts)
-    val favoriteEvents: StateFlow<List<EventEntity>> = repository.getFavoriteEvents()
+    // Favorite events for the current user
+    val favoriteEvents: StateFlow<List<EventEntity>> = _userId
+        .filterNotNull()
+        .flatMapLatest { repository.getFavoriteEventsByUserId(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Sets the current user ID to filter events accordingly.
+     */
+    fun setUserId(userId: Int) {
+        _userId.value = userId
+    }
 
     fun insertEvent(event: EventEntity) {
         viewModelScope.launch {

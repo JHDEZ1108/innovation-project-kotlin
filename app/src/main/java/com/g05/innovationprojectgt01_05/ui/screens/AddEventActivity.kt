@@ -27,6 +27,7 @@ import java.io.FileOutputStream
 
 @Composable
 fun AddEventScreen(
+    userId: Int,
     onSave: (EventEntity) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -194,6 +195,7 @@ fun AddEventScreen(
                     onClick = {
                         if (name.isNotBlank() && date.isNotBlank() && time.isNotBlank()) {
                             val newEvent = EventEntity(
+                                userId = userId,
                                 name = name,
                                 description = description,
                                 date = date,
@@ -214,4 +216,3 @@ fun AddEventScreen(
         }
     }
 }
-

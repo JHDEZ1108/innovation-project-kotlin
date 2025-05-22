@@ -81,6 +81,7 @@ dependencies {
 
     implementation(libs.places)
 
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
 
 }

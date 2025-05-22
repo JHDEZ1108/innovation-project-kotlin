@@ -26,10 +26,17 @@ import com.g05.innovationprojectgt01_05.data.entities.EventEntity
 import com.g05.innovationprojectgt01_05.ui.theme.InnovationProjectGT0105Theme
 import com.g05.innovationprojectgt01_05.ui.viewmodel.EventViewModel
 import com.g05.innovationprojectgt01_05.ui.viewmodel.EventViewModelFactory
+import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModel
+import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModelFactory
 
 class HomeActivity : ComponentActivity() {
-    private val viewModel: EventViewModel by viewModels {
+
+    private val eventViewModel: EventViewModel by viewModels {
         EventViewModelFactory(applicationContext)
+    }
+
+    private val userViewModel: UserViewModel by viewModels {
+        UserViewModelFactory(applicationContext)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,19 +54,23 @@ class HomeActivity : ComponentActivity() {
                 }
 
                 updatedEvent?.let {
-                    viewModel.updateEvent(it)
+                    eventViewModel.updateEvent(it)
                 }
             }
         }
 
         setContent {
+            val currentUser by userViewModel.currentUser.collectAsState()
+            val userId = currentUser?.id
+
             InnovationProjectGT0105Theme {
                 var showAddScreen by remember { mutableStateOf(false) }
 
-                if (showAddScreen) {
+                if (showAddScreen && userId != null) {
                     AddEventScreen(
+                        userId = userId,
                         onSave = { event ->
-                            viewModel.insertEvent(event)
+                            eventViewModel.insertEvent(event)
                             showAddScreen = false
                         },
                         onCancel = {
@@ -67,15 +78,17 @@ class HomeActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    val events by viewModel.events.collectAsState()
+                    val events by eventViewModel.events.collectAsState()
 
                     HomeScreen(
                         events = events,
+                        showAddScreen = showAddScreen,
                         onLogout = {
-                            viewModel.logout()
+                            eventViewModel.logout()
                             startActivity(Intent(this, LoginActivity::class.java))
                             finish()
                         },
+                        eventViewModel = eventViewModel,
                         onAddEvent = {
                             showAddScreen = true
                         },
@@ -85,7 +98,7 @@ class HomeActivity : ComponentActivity() {
                             editEventLauncher.launch(intent)
                         },
                         onDeleteEvent = { event ->
-                            viewModel.deleteEvent(event)
+                            eventViewModel.deleteEvent(event)
                         },
                         onViewEvent = { event ->
                             val intent = Intent(this, EventDetailsActivity::class.java)
@@ -102,11 +115,13 @@ class HomeActivity : ComponentActivity() {
 @Composable
 fun HomeScreen(
     events: List<EventEntity>,
+    showAddScreen: Boolean,
     onLogout: () -> Unit,
     onAddEvent: () -> Unit,
     onEditEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
-    onViewEvent: (EventEntity) -> Unit
+    onViewEvent: (EventEntity) -> Unit,
+    eventViewModel: EventViewModel
 ) {
     val favorites = events.filter { it.isFavorite }
     val others = events.filterNot { it.isFavorite }

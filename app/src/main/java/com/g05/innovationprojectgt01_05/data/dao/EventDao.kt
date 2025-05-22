@@ -33,4 +33,12 @@ interface EventDao {
     // Get event by ID
     @Query("SELECT * FROM events WHERE id = :eventId LIMIT 1")
     suspend fun getEventById(eventId: Int): EventEntity?
+
+    // Get all events by user ID
+    @Query("SELECT * FROM events WHERE userId = :userId ORDER BY date ASC, time ASC")
+    fun getEventsByUserId(userId: Int): Flow<List<EventEntity>>
+
+    // Get favorite events by user ID
+    @Query("SELECT * FROM events WHERE userId = :userId AND isFavorite = 1 ORDER BY date ASC, time ASC")
+    fun getFavoriteEventsByUserId(userId: Int): Flow<List<EventEntity>>
 }

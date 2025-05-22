@@ -13,21 +13,28 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.g05.innovationprojectgt01_05.ui.screens.HomeActivity
+import com.g05.innovationprojectgt01_05.data.entities.UserEntity
 import com.g05.innovationprojectgt01_05.ui.theme.InnovationProjectGT0105Theme
+import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModel
+import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModelFactory
+import com.g05.innovationprojectgt01_05.ui.screens.HomeActivity
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
+            val userViewModel: UserViewModel = viewModel(factory = UserViewModelFactory(applicationContext))
+
             InnovationProjectGT0105Theme {
                 RegisterScreen(
+                    userViewModel = userViewModel,
                     onRegisterSuccess = {
                         startActivity(Intent(this, HomeActivity::class.java))
                         finish()
@@ -46,6 +53,7 @@ class RegisterActivity : ComponentActivity() {
 
 @Composable
 fun RegisterScreen(
+    userViewModel: UserViewModel,
     onRegisterSuccess: () -> Unit,
     onRegisterError: (String) -> Unit,
     onNavigateToLogin: () -> Unit
@@ -57,8 +65,8 @@ fun RegisterScreen(
     var showPassword by remember { mutableStateOf(false) }
     var showConfirmPassword by remember { mutableStateOf(false) }
 
-    val isFormValid = username.isNotBlank() && email.isNotBlank()
-            && password.isNotBlank() && confirmPassword.isNotBlank()
+    val isFormValid = username.isNotBlank() && email.isNotBlank() &&
+            password.isNotBlank() && confirmPassword.isNotBlank()
 
     val passwordMismatch = password != confirmPassword && confirmPassword.isNotBlank()
 
@@ -73,11 +81,7 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Crear cuenta",
-                style = MaterialTheme.typography.titleLarge
-            )
-
+            Text("Crear cuenta", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
@@ -158,9 +162,19 @@ fun RegisterScreen(
                         return@Button
                     }
 
-                    val auth = Firebase.auth
-                    auth.createUserWithEmailAndPassword(email, password)
-                        .addOnSuccessListener {
+                    Firebase.auth.createUserWithEmailAndPassword(email, password)
+                        .addOnSuccessListener { result ->
+                            val firebaseUser = result.user
+                            if (firebaseUser != null) {
+                                val uid = firebaseUser.uid
+                                val newUser = UserEntity(
+                                    firebaseUid = uid,
+                                    username = username,
+                                    email = email
+                                )
+                                userViewModel.insertUser(newUser)
+                            }
+
                             onRegisterSuccess()
                         }
                         .addOnFailureListener { e ->

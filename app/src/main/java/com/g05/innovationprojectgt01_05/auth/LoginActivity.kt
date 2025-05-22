@@ -6,27 +6,34 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.g05.innovationprojectgt01_05.ui.screens.HomeActivity
 import com.g05.innovationprojectgt01_05.ui.theme.InnovationProjectGT0105Theme
+import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModel
+import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModelFactory
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
+            val userViewModel: UserViewModel = viewModel(factory = UserViewModelFactory(applicationContext))
+
             InnovationProjectGT0105Theme {
                 LoginScreen(
+                    userViewModel = userViewModel,
                     onLoginSuccess = {
                         startActivity(Intent(this, HomeActivity::class.java))
                         finish()
@@ -45,6 +52,7 @@ class LoginActivity : ComponentActivity() {
 
 @Composable
 fun LoginScreen(
+    userViewModel: UserViewModel,
     onLoginSuccess: () -> Unit,
     onLoginError: (String) -> Unit,
     onNavigateToRegister: () -> Unit
@@ -65,11 +73,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Iniciar sesión",
-                style = MaterialTheme.typography.titleLarge
-            )
-
+            Text("Iniciar sesión", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
@@ -87,43 +91,48 @@ fun LoginScreen(
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
                 trailingIcon = {
-                    val image = if (showPassword)
-                        Icons.Default.VisibilityOff
-                    else
-                        Icons.Default.Visibility
-
                     IconButton(onClick = { showPassword = !showPassword }) {
-                        Icon(imageVector = image, contentDescription = "Mostrar/ocultar contraseña")
+                        val icon = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility
+                        Icon(imageVector = icon, contentDescription = "Mostrar/ocultar contraseña")
                     }
-                }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
-                    val auth = Firebase.auth
-
                     if (!isFormValid) {
                         onLoginError("Completa todos los campos")
                         return@Button
                     }
 
-                    auth.signInWithEmailAndPassword(email, password)
-                        .addOnSuccessListener { onLoginSuccess() }
-                        .addOnFailureListener { e ->
-                            val errorMessage = when {
-                                e.message?.contains("no user record", ignoreCase = true) == true ||
-                                        e.message?.contains("There is no user record") == true -> {
-                                    "El usuario no existe"
-                                }
-                                else -> {
-                                    "Error al iniciar sesión: ${e.message}"
-                                }
+                    Firebase.auth.signInWithEmailAndPassword(email, password)
+                        .addOnSuccessListener { result ->
+                            val firebaseUser = result.user
+                            if (firebaseUser != null) {
+                                val uid = firebaseUser.uid
+                                val emailFromFirebase = firebaseUser.email ?: ""
+                                val usernameFromEmail = emailFromFirebase.substringBefore("@")
+
+                                // Insert only if not exists in local DB
+                                userViewModel.insertUserIfNotExists(
+                                    uid = uid,
+                                    username = usernameFromEmail,
+                                    email = emailFromFirebase
+                                )
                             }
+
+                            onLoginSuccess()
+                        }
+                        .addOnFailureListener { e ->
+                            val errorMessage = if (
+                                e.message?.contains("no user record", ignoreCase = true) == true
+                            ) "El usuario no existe"
+                            else "Error al iniciar sesión: ${e.message}"
 
                             onLoginError(errorMessage)
                         }

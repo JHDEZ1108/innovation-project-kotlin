@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.g05.innovationprojectgt01_05.data.AppDatabase
 import com.g05.innovationprojectgt01_05.data.repository.EventRepository
+import com.g05.innovationprojectgt01_05.data.repository.UserRepository
 
 /**
  * Manual dependency injection container.
@@ -17,6 +18,7 @@ class AppContainer(context: Context) {
         "innovation_project_database"
     ).build()
 
-    // Repository instance
+    // Repository instances
     val eventRepository: EventRepository = EventRepository(database.eventDao())
+    val userRepository: UserRepository = UserRepository(database.userDao())
 }
