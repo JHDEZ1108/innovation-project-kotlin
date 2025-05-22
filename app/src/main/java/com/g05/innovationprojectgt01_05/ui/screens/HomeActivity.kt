@@ -28,6 +28,7 @@ import com.g05.innovationprojectgt01_05.ui.viewmodel.EventViewModel
 import com.g05.innovationprojectgt01_05.ui.viewmodel.EventViewModelFactory
 import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModel
 import com.g05.innovationprojectgt01_05.ui.viewmodel.UserViewModelFactory
+import com.google.firebase.auth.FirebaseAuth
 
 class HomeActivity : ComponentActivity() {
 
@@ -62,11 +63,27 @@ class HomeActivity : ComponentActivity() {
         setContent {
             val currentUser by userViewModel.currentUser.collectAsState()
             val userId = currentUser?.id
+            var showAddScreen by remember { mutableStateOf(false) }
+
+            val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
+
+            // 🚀 Corrección: cargar datos del usuario y eventos cuando estén disponibles
+            LaunchedEffect(firebaseUser, userId) {
+                firebaseUser?.uid?.let { uid ->
+                    userViewModel.loadUserByFirebaseUid(uid)
+                }
+
+                userId?.let {
+                    eventViewModel.setUserId(it)
+                }
+            }
 
             InnovationProjectGT0105Theme {
-                var showAddScreen by remember { mutableStateOf(false) }
-
-                if (showAddScreen && userId != null) {
+                if (userId == null) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (showAddScreen) {
                     AddEventScreen(
                         userId = userId,
                         onSave = { event ->
@@ -82,16 +99,14 @@ class HomeActivity : ComponentActivity() {
 
                     HomeScreen(
                         events = events,
-                        showAddScreen = showAddScreen,
                         onLogout = {
                             eventViewModel.logout()
+                            userViewModel.clearUser()
+                            FirebaseAuth.getInstance().signOut()
                             startActivity(Intent(this, LoginActivity::class.java))
                             finish()
                         },
-                        eventViewModel = eventViewModel,
-                        onAddEvent = {
-                            showAddScreen = true
-                        },
+                        onAddEvent = { showAddScreen = true },
                         onEditEvent = { event ->
                             val intent = Intent(this, EditEventActivity::class.java)
                             intent.putExtra("event", event)
@@ -115,13 +130,11 @@ class HomeActivity : ComponentActivity() {
 @Composable
 fun HomeScreen(
     events: List<EventEntity>,
-    showAddScreen: Boolean,
     onLogout: () -> Unit,
     onAddEvent: () -> Unit,
     onEditEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
-    onViewEvent: (EventEntity) -> Unit,
-    eventViewModel: EventViewModel
+    onViewEvent: (EventEntity) -> Unit
 ) {
     val favorites = events.filter { it.isFavorite }
     val others = events.filterNot { it.isFavorite }

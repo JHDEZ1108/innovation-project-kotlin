@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.g05.innovationprojectgt01_05.data.entities.EventEntity
 import com.g05.innovationprojectgt01_05.ui.theme.InnovationProjectGT0105Theme
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class EventDetailsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,7 +67,7 @@ fun EventDetailsScreen(
             .padding(WindowInsets.systemBars.asPaddingValues())
             .padding(16.dp)
     ) {
-        // Back button
+        // Botón de retroceso
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -87,7 +89,7 @@ fun EventDetailsScreen(
             )
         }
 
-        // Show image if available
+        // Imagen del evento
         event.imageUri?.let { uriString ->
             val painter = rememberAsyncImagePainter(model = Uri.parse(uriString))
             Image(
@@ -101,6 +103,7 @@ fun EventDetailsScreen(
             )
         }
 
+        // Datos del evento
         Text("Nombre:", style = MaterialTheme.typography.labelMedium)
         Text(event.name, style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(8.dp))
@@ -121,23 +124,42 @@ fun EventDetailsScreen(
         Text(if (event.isFavorite) "Sí" else "No", style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostrar ubicación si existe
-        if (!event.location.isNullOrBlank()) {
+        // Ubicación
+        event.location?.takeIf { it.isNotBlank() }?.let { location ->
             Text("Ubicación:", style = MaterialTheme.typography.labelMedium)
-            Text(event.location ?: "", style = MaterialTheme.typography.bodyLarge)
+            Text(location, style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
+
+            val encodedLocation = URLEncoder.encode(location, StandardCharsets.UTF_8.toString())
 
             Button(
                 onClick = {
                     val mapIntent = Intent(
                         Intent.ACTION_VIEW,
-                        Uri.parse("geo:0,0?q=${Uri.encode(event.location)}")
-                    )
-                    mapIntent.setPackage("com.google.android.apps.maps")
+                        Uri.parse("geo:0,0?q=$encodedLocation")
+                    ).apply {
+                        setPackage("com.google.android.apps.maps")
+                    }
+
+                    // Si existe Google Maps
                     if (mapIntent.resolveActivity(context.packageManager) != null) {
                         context.startActivity(mapIntent)
                     } else {
-                        Toast.makeText(context, "No se encontró Google Maps", Toast.LENGTH_SHORT).show()
+                        // Fallback: abrir en navegador
+                        val webIntent = Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://www.google.com/maps/search/?api=1&query=$encodedLocation")
+                        )
+
+                        if (webIntent.resolveActivity(context.packageManager) != null) {
+                            context.startActivity(webIntent)
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "No se encontró una aplicación para abrir mapas",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
                 }
             ) {

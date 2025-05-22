@@ -21,7 +21,7 @@ import kotlinx.parcelize.Parcelize
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["userId"])] // ✅ Se agrega índice a la foreign key
+    indices = [Index(value = ["userId"])]
 )
 data class EventEntity(
 
